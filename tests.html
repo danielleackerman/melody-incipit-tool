@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tests — Melody Incipit Grid Tool</title>
+  <style>
+    body { font-family: ui-monospace, Menlo, Consolas, monospace; margin: 2rem; background: #faf7f1; color: #26221b; }
+    h1 { font-size: 1.2rem; }
+    .pass { color: #2f6b3a; }
+    .fail { color: #8a3030; font-weight: bold; }
+    #summary { font-size: 1.1rem; margin: 1rem 0; padding: 0.6rem 1rem; border-radius: 8px; }
+    #summary.ok { background: #e7f0e2; }
+    #summary.bad { background: #f3dede; }
+    li { margin: 0.15rem 0; }
+    pre { background: #fff; border: 1px solid #e6ddcf; padding: 0.6rem; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Melody Incipit Grid Tool — pure-function tests</h1>
+  <p>These tests cover grid math, remapping, degree rendering, the alignment renderer, exports, validation, and round-trip integrity. Open this file the same way you open <code>index.html</code>.</p>
+  <div id="summary"></div>
+  <ul id="results"></ul>
+
+  <script src="app.js"></script>
+  <script src="tests.js"></script>
+  <script>
+    (function () {
+      var res = runMITTests(window.MIT);
+      var ul = document.getElementById('results');
+      res.results.forEach(function (r) {
+        var li = document.createElement('li');
+        li.className = r.ok ? 'pass' : 'fail';
+        li.textContent = (r.ok ? 'PASS  ' : 'FAIL  ') + r.name + (r.ok ? '' : ' — ' + r.detail);
+        ul.appendChild(li);
+      });
+      var s = document.getElementById('summary');
+      s.className = res.failed === 0 ? 'ok' : 'bad';
+      s.textContent = res.passed + ' passed, ' + res.failed + ' failed (' + res.results.length + ' total)';
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Melody Incipit Grid Tool</title>
+  <meta name="description" content="Capture a melody's fingerprint — chords, counts, scale degrees, and lyrics on an aligned grid — and export it as Markdown, JSON, or plain text.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='24' font-size='24'%3E%E2%99%AC%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+  <a class="skip-link" href="#phrases">Skip to bar cards</a>
+
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">&#9836;</span>
+      <h1>Melody Incipit Grid Tool</h1>
+    </div>
+    <div class="mode-toggle" role="group" aria-label="Editor mode">
+      <button id="mode-capture" type="button" aria-pressed="true">Capture</button>
+      <button id="mode-read" type="button" aria-pressed="false">Read</button>
+    </div>
+    <div class="header-actions">
+      <button id="new-btn" type="button" class="ghost-btn">New</button>
+      <button id="import-btn" type="button" class="ghost-btn">Import JSON</button>
+      <button id="example-btn" type="button" class="ghost-btn">Load example</button>
+      <button id="keys-btn" type="button" class="ghost-btn" aria-expanded="false" aria-controls="keys-pop">Keys</button>
+      <span id="saved-indicator" aria-hidden="true">Saved &#10003;</span>
+    </div>
+    <div id="keys-pop" hidden>
+      <h2>Keyboard controls</h2>
+      <dl>
+        <dt>Tab / Shift+Tab</dt><dd>Next / previous cell along the lane, across bars</dd>
+        <dt>Enter</dt><dd>Jump to the next bar's first degree cell</dd>
+        <dt>&uarr; / &darr;</dt><dd>Switch between degree and lyric lanes</dd>
+        <dt>&larr; / &rarr;</dt><dd>Move along the lane (when the cursor is at the cell edge)</dd>
+        <dt>Ctrl/Cmd + D</dt><dd>Duplicate the current bar</dd>
+        <dt>Ctrl/Cmd + Enter</dt><dd>Add a bar to the current phrase</dd>
+      </dl>
+      <p>Type <code>b3</code> or <code>#4</code> in a degree cell to get &#9837;3 / &#9839;4. Use <code>-</code> for a held note; leave a cell empty for space.</p>
+    </div>
+  </header>
+
+  <p id="status-announce" class="sr-only" role="status" aria-live="polite"></p>
+
+  <main class="layout">
+    <div class="editor-pane">
+
+      <!-- ===================== Melody metadata ===================== -->
+      <section class="metadata" aria-labelledby="metadata-heading">
+        <button id="metadata-toggle" type="button" aria-expanded="true" aria-controls="metadata-body">
+          <h2 id="metadata-heading">Melody metadata</h2>
+          <span id="meta-date" class="meta-date"></span>
+          <span class="disclosure" aria-hidden="true"></span>
+        </button>
+        <div id="metadata-body" class="metadata-body open">
+          <div class="field-grid">
+            <label>Title
+              <input id="meta-title" type="text" placeholder="Walking Home Hook" autocomplete="off">
+            </label>
+            <label>Song ID
+              <input id="meta-song_id" type="text" placeholder="walking-home" autocomplete="off">
+            </label>
+            <label>Key
+              <input id="meta-key" type="text" list="key-list" placeholder="C" autocomplete="off">
+            </label>
+            <label>Tonal center
+              <input id="meta-tonal_center" type="text" list="key-list" placeholder="C" autocomplete="off">
+            </label>
+            <label>Mode / scale
+              <input id="meta-mode" type="text" list="mode-list" placeholder="major" autocomplete="off">
+            </label>
+            <label>Meter
+              <input id="meta-meter" type="text" list="meter-list" placeholder="4/4" autocomplete="off">
+            </label>
+            <label>Tempo
+              <input id="meta-tempo" type="text" placeholder="72 bpm" autocomplete="off">
+            </label>
+            <label>Feel
+              <input id="meta-feel" type="text" list="feel-list" placeholder="gospel sway" autocomplete="off">
+            </label>
+            <label>Hook function
+              <select id="meta-hook_function">
+                <option value=""></option>
+                <option>opening line</option>
+                <option>chorus hook</option>
+                <option>verse motif</option>
+                <option>call-and-response</option>
+                <option>tag ending</option>
+                <option>melodic answer</option>
+                <option>riff</option>
+                <option>vocal run</option>
+                <option>countermelody</option>
+              </select>
+            </label>
+            <label>Status
+              <select id="meta-status">
+                <option>raw</option>
+                <option>promising</option>
+                <option>hook</option>
+                <option>verse</option>
+                <option>chorus</option>
+                <option>bridge</option>
+                <option>motif</option>
+                <option>developed</option>
+                <option>archived</option>
+              </select>
+            </label>
+            <label class="span-2">Audio reference
+              <input id="meta-audio_ref" type="text" placeholder="voice-memo-2026-04-29.m4a, Logic project, or a link" autocomplete="off">
+            </label>
+            <label class="span-2">Tags <span class="hint">(comma separated)</span>
+              <input id="meta-tags" type="text" placeholder="gospel, hook, flat-seven" autocomplete="off">
+            </label>
+          </div>
+          <div id="tag-chips" class="tag-chips" aria-hidden="true"></div>
+          <p id="meter-notice" class="notice" hidden>
+            This meter isn't one the grid knows (4/4, 3/4, 2/4, 6/8), so bars use a 4/4-style grid. The meter is still saved with your incipit.
+          </p>
+          <div class="field-grid">
+            <label class="span-2">Contour
+              <input id="meta-contour" type="text" placeholder="Starts on 3, steps down to 1, resolves home" autocomplete="off">
+            </label>
+            <label class="span-2">Notes
+              <textarea id="meta-notes" rows="2" placeholder="Keep the b7 color. Don't over-quantize."></textarea>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== Grid controls ===================== -->
+      <div class="grid-controls">
+        <fieldset class="resolution" role="radiogroup">
+          <legend>Grid</legend>
+          <label><input type="radio" name="grid-unit" value="quarter"><span>Quarter</span></label>
+          <label><input type="radio" name="grid-unit" value="eighth" checked><span>Eighth</span></label>
+          <label><input type="radio" name="grid-unit" value="sixteenth"><span>Sixteenth</span></label>
+        </fieldset>
+        <button id="add-phrase-btn" type="button" class="ghost-btn">+ Add phrase</button>
+      </div>
+
+      <div id="empty-hint" class="empty-hint" hidden>
+        <p><strong>Catch the melody before it disappears.</strong> Put the chord at the top of the bar, type scale degrees under the counts where the notes land, and the lyric syllables beneath them. The aligned preview builds itself.</p>
+        <button id="empty-example-btn" type="button">Load the worked example</button>
+      </div>
+
+      <!-- ===================== Phrases & bar cards ===================== -->
+      <div id="phrases"></div>
+
+    </div>
+
+    <!-- ===================== Preview & export ===================== -->
+    <aside class="preview-pane" aria-labelledby="preview-heading">
+      <section class="preview">
+        <div class="preview-head">
+          <h2 id="preview-heading">Live preview</h2>
+          <div class="preview-tabs" role="tablist" aria-label="Preview format">
+            <button class="preview-tab active" data-tab="text" role="tab" aria-selected="true" type="button">Text</button>
+            <button class="preview-tab" data-tab="markdown" role="tab" aria-selected="false" type="button">Markdown</button>
+            <button class="preview-tab" data-tab="json" role="tab" aria-selected="false" type="button">JSON</button>
+          </div>
+        </div>
+        <pre id="preview-output" aria-live="polite" tabindex="0"></pre>
+      </section>
+
+      <section class="exports" aria-labelledby="exports-heading">
+        <h2 id="exports-heading">Export</h2>
+        <div class="export-grid">
+          <button id="copy-md" type="button">Copy Markdown</button>
+          <button id="dl-md" type="button">Download .md</button>
+          <button id="copy-json" type="button">Copy JSON</button>
+          <button id="dl-json" type="button">Download .json</button>
+          <button id="copy-txt" type="button">Copy plain text</button>
+          <button id="dl-txt" type="button">Download .txt</button>
+        </div>
+        <button id="print-btn" type="button" class="ghost-btn print-btn">Print read view</button>
+        <p class="storage-note">Work autosaves in this browser. Download JSON for a copy that survives anything.</p>
+      </section>
+    </aside>
+  </main>
+
+  <!-- ===================== Read mode sheet ===================== -->
+  <section id="read-sheet" class="read-sheet" aria-label="Read view"></section>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <input id="import-file" type="file" accept=".json,application/json" class="sr-only" aria-label="Import incipit JSON file">
+
+  <datalist id="key-list">
+    <option>C</option><option>C#</option><option>Db</option><option>D</option><option>D#</option>
+    <option>Eb</option><option>E</option><option>F</option><option>F#</option><option>Gb</option>
+    <option>G</option><option>G#</option><option>Ab</option><option>A</option><option>A#</option>
+    <option>Bb</option><option>B</option>
+    <option>Cm</option><option>C#m</option><option>Dm</option><option>Ebm</option><option>Em</option>
+    <option>Fm</option><option>F#m</option><option>Gm</option><option>G#m</option><option>Am</option>
+    <option>Bbm</option><option>Bm</option>
+  </datalist>
+  <datalist id="mode-list">
+    <option>major</option><option>natural minor</option><option>harmonic minor</option>
+    <option>melodic minor</option><option>major pentatonic</option><option>minor pentatonic</option>
+    <option>blues</option><option>mixolydian</option><option>dorian</option><option>lydian</option>
+    <option>phrygian</option><option>chromatic color</option><option>uncertain</option>
+  </datalist>
+  <datalist id="meter-list">
+    <option>4/4</option><option>3/4</option><option>2/4</option><option>6/8</option>
+  </datalist>
+  <datalist id="feel-list">
+    <option>straight</option><option>swing</option><option>shuffle</option><option>gospel sway</option>
+    <option>6/8 ballad</option><option>funk</option><option>folk</option><option>hymnlike</option>
+    <option>cinematic</option><option>rubato</option><option>spoken-like</option>
+  </datalist>
+
+  <script src="app.js"></script>
+</body>
+</html>

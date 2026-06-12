@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "melody-incipit.schema.json",
+  "title": "Melody Incipit",
+  "description": "Canonical data model for the Melody Incipit Grid Tool. Lanes are stored as per-subdivision cell arrays; aligned text, Markdown, and plain-text outputs are renderings of this structure, never the source of truth.",
+  "type": "object",
+  "required": ["schema_version", "type", "phrases"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "type": { "type": "string", "const": "melody-incipit" },
+    "id": { "type": "string", "description": "Stable identifier, normally date + slug fragment." },
+    "title": { "type": "string" },
+    "song_id": { "type": "string", "description": "Connects the incipit to a larger song project." },
+    "date_created": { "type": "string", "description": "YYYY-MM-DD" },
+    "date_modified": { "type": "string", "description": "YYYY-MM-DD" },
+    "audio_ref": { "type": "string", "description": "Voice memo, Logic file, or recording link (free text in v1)." },
+    "key": { "type": "string" },
+    "tonal_center": { "type": "string" },
+    "mode": { "type": "string", "description": "Mode / scale collection. Suggested vocabulary: major, natural minor, harmonic minor, melodic minor, major pentatonic, minor pentatonic, blues, mixolydian, dorian, lydian, phrygian, chromatic color, uncertain." },
+    "meter": {
+      "type": "string",
+      "description": "Document default meter. Fully supported: 4/4, 3/4, 2/4, 6/8. Other values are accepted and rendered with a 4/4-style grid plus a notice."
+    },
+    "tempo": { "type": "string" },
+    "feel": { "type": "string", "description": "Suggested vocabulary: straight, swing, shuffle, gospel sway, 6/8 ballad, funk, folk, hymnlike, cinematic, rubato, spoken-like." },
+    "hook_function": { "type": "string", "description": "Suggested vocabulary: opening line, chorus hook, verse motif, call-and-response, tag ending, melodic answer, riff, vocal run, countermelody." },
+    "default_grid_unit": { "$ref": "#/definitions/gridUnit" },
+    "contour": { "type": "string" },
+    "notes": { "type": "string" },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "status": { "type": "string", "description": "Suggested vocabulary: raw, promising, hook, verse, chorus, bridge, motif, developed, archived." },
+    "phrases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/phrase" }
+    }
+  },
+  "definitions": {
+    "gridUnit": {
+      "type": "string",
+      "enum": ["quarter", "eighth", "sixteenth"]
+    },
+    "phrase": {
+      "type": "object",
+      "required": ["label", "bars"],
+      "properties": {
+        "label": { "type": "string" },
+        "bars": { "type": "array", "items": { "$ref": "#/definitions/bar" } }
+      }
+    },
+    "bar": {
+      "type": "object",
+      "required": ["meter", "grid_unit", "chords", "degrees", "lyrics"],
+      "description": "degrees and lyrics are parallel arrays whose length equals the subdivision count implied by meter x grid_unit. Empty string = rest/sustain space; \"-\" = explicit hold. Accidentals are stored ASCII (b3, #4) and rendered as flat/sharp glyphs by the display layer.",
+      "properties": {
+        "meter": { "type": "string" },
+        "grid_unit": { "$ref": "#/definitions/gridUnit" },
+        "chords": {
+          "type": "array",
+          "description": "v1 always contains exactly one chord at position 0. The array form keeps chord-per-beat possible later without a schema break.",
+          "items": {
+            "type": "object",
+            "required": ["symbol", "position"],
+            "properties": {
+              "symbol": { "type": "string" },
+              "position": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "degrees": { "type": "array", "items": { "type": "string" } },
+        "lyrics": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
